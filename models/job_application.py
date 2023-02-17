@@ -11,20 +11,21 @@ class JobApplication:
                  url: str,
                  company_name: str,
                  linkedin_status: str,
-                 title: str,
-                 **kwargs) -> None:
+                 title: str) -> None:
         self.url = url
         self.company_name = company_name
         self.linkedin_status = linkedin_status
         self.title = title
-        self.internal_dict = {
-            "url": url,
-            "company_name": company_name,
-            "linkedin_status": linkedin_status
-        }.update(**kwargs)
+
+    def to_dict(self) -> dict:
+        """
+        Return the fields of the JobApplication in a dictionary.
+        Useful when exporting the data to files.
+        """
+        return vars(self)
 
     def __str__(self) -> str:
-        pattern = "{}, NAME: {}, STATUS: {}"
+        pattern = "{}, {} - {}"
         return pattern.format(
             self.title,
             self.company_name,

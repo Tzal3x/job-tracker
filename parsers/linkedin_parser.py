@@ -4,7 +4,7 @@ Scrap LinkedIn data with selenium and BeautifulSoup.
 import re
 from time import sleep
 from random import random
-from typing import Set
+from typing import Set, List
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -69,7 +69,7 @@ class LinkedInParser:
         self.driver.implicitly_wait(1)
         logger.info("Login successful!")
 
-    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> Set[JobApplication]:
+    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> List[JobApplication]:
         """
         Iterate through all the pages of applied jobs and 
         return a set that contains tuples of brief info about them.
@@ -101,7 +101,7 @@ class LinkedInParser:
                 page += 10  #go to next page ...
 
         logger.info("Total number of jobs parsed: %i", len(job_applications_accumulator))
-        return job_applications_accumulator
+        return list(job_applications_accumulator)
 
     def _go_to_page(self, page_number: int):
         """
