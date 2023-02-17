@@ -10,12 +10,11 @@ def main():
     The main flow of the program is included here.
     """
     linkedin_parser = LinkedInParser(
-        credentials=load_credentials(r".env.yaml"),  #TODO: create OS env vars instead
+        credentials=load_credentials(r".env.yaml"),
         headless=False
     )
-    linkedin_parser.login()
-    linkedin_parser.get_job_urls()
 
+    applied_jobs = linkedin_parser.parse_all_applied_jobs(until_page=20)
 
 if __name__ == "__main__":
     main()

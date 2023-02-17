@@ -4,6 +4,8 @@ Scrap LinkedIn data with selenium and BeautifulSoup.
 import re
 from time import sleep
 from random import random
+from typing import Set
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -11,15 +13,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from helpers.logger import logger
-
+from models.job_application import JobApplication
 
 class LinkedInParser:
     """
     Singleton object used to parse LinkedIn data of applied job applications. 
     """
-    _html_boxes_containing_current_jobs = {
-        "div": "entity-result__content entity-result__divider pt3 pb3 t-12 t-black--light"
-    }
 
     def __init__(self, credentials: dict, headless=True) -> None:
         options = Options()
@@ -37,7 +36,7 @@ class LinkedInParser:
     def __del__(self) -> None:
         self.driver.close()
 
-    def login(self) -> None:
+    def _login(self) -> None:
         """
         Driver logs in to the LinkedIn
         """
@@ -70,67 +69,80 @@ class LinkedInParser:
         self.driver.implicitly_wait(1)
         logger.info("Login successful!")
 
-    def get_job_urls(self):
+    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> Set[JobApplication]:
         """
         Iterate through all the pages of applied jobs and 
         return a set that contains tuples of brief info about them.
         Useful while running the program for the first time.
 
-        TODO: parse job title/role
-        TODO: Make an object JobApplication. 
-         This job application will have a Brief and a Detailed version.
+        This job application will have a Brief and a Detailed version.
         """
+        self._login()
+
         logger.info("Parsing URLS of applied jobs ...")
-
         next_page_available = True
-        job_application_briefs = set()
-        page = 0
+        page = from_page
+        job_applications_accumulator = set()  #This is the output
         while next_page_available:
-            logger.info("Scanning page %s ...", page)
-
             # pylint: disable = line-too-long
-            applied_jobs_url = f"https://www.linkedin.com/my-items/saved-jobs/?cardType=APPLIED&start={page}"
-            self.driver.get(applied_jobs_url)
+            self._go_to_page(page_number=page)
+            job_applications_of_current_page = self._parse_job_applications_of_current_page()
 
-            self.driver.implicitly_wait(1)
-            sleep(1 + random() * 4)
-
-            html_doc = self.driver.page_source
-            soup = BeautifulSoup(html_doc, 'html.parser')
-            div_boxes = soup.find_all(self._html_boxes_containing_current_jobs)
-            job_application_briefs_of_current_page = set()
-            for div_box in div_boxes:
-                job_post_url = self._parse_job_post_url(div_box)
-                company_name = self._parse_company_name(div_box)
-                linkedin_status = self._parse_linkedin_status(div_box)
-                if job_post_url and company_name and linkedin_status:
-                    job_application_briefs_of_current_page.add(
-                        (
-                            job_post_url,
-                            company_name,
-                            linkedin_status
-                        )
-                    )
-            final_page_reached = not job_application_briefs_of_current_page
+            final_page_reached = not job_applications_of_current_page
             if final_page_reached:
                 logger.info("Final page reached! Parsing no further ...")
                 next_page_available = False
             else:
-                job_application_briefs.update(
-                    job_application_briefs_of_current_page)
-                page += 10
+                job_applications_accumulator.update(
+                    job_applications_of_current_page
+                    )
+                if until_page and until_page == page:
+                    break
+                page += 10  #go to next page ...
 
-        logger.info("Number of jobs parsed: {len(job_application_briefs)}")
-        return job_application_briefs
+        logger.info("Total number of jobs parsed: %i", len(job_applications_accumulator))
+        return job_applications_accumulator
+
+    def _go_to_page(self, page_number: int):
+        """
+        Move webdriver to specific page of applied jobs 
+        """
+        logger.info("Going to page %s ...", page_number)
+        # pylint: disable = line-too-long
+        applied_jobs_url = f"https://www.linkedin.com/my-items/saved-jobs/?cardType=APPLIED&start={page_number}"
+        self.driver.get(applied_jobs_url)
+        self.driver.implicitly_wait(1)
+        sleep(1 + random() * 4)
+
+    def _parse_job_applications_of_current_page(self) -> Set[JobApplication]:
+        _tag_of_boxes_containing_jobs_of_current_page = {
+            "div": "entity-result__content entity-result__divider pt3 pb3 t-12 t-black--light"
+        }
+        html_doc = self.driver.page_source
+        soup = BeautifulSoup(html_doc, 'html.parser')
+        div_boxes = soup.find_all(_tag_of_boxes_containing_jobs_of_current_page)
+
+        job_applications_set = set()  #This is the output
+        for div_box in div_boxes:
+            job_info = {
+                "url": self._parse_job_post_url(div_box),
+                "company_name": self._parse_company_name(div_box),
+                "linkedin_status": self._parse_linkedin_status(div_box),
+                "title": self._parse_title(div_box),
+                }
+            job_application = JobApplication(**job_info)
+            if job_application.all_basic_fields_valid():
+                job_applications_set.add(
+                    job_application
+                )
+        return job_applications_set
 
     def _parse_job_post_url(self, div_box) -> str:
         _html_box_containing_job_url = {"a": "app-aware-link "}
         job_post_url_found = div_box.find_all(_html_box_containing_job_url)
         if job_post_url_found:
             job_post_url = job_post_url_found[0].attrs['href']
-            job_post_url_is_valid = "flagship3_job_home_appliedjobs" in job_post_url
-            return job_post_url if job_post_url_is_valid else ""
-
+            return job_post_url
         return ""
 
     def _parse_company_name(self, div_box) -> str:
@@ -141,7 +153,6 @@ class LinkedInParser:
             company_name = self._extract_text_from_div(
                 str(company_found[0]))
             return company_name
-
         return ""
 
     def _parse_linkedin_status(self, div_box) -> str:
@@ -153,17 +164,35 @@ class LinkedInParser:
             linkedin_status = self._extract_text_from_div(
                 str(linkedin_status_found[0]))
             return linkedin_status
+        return ""
 
+    def _parse_title(self, div_box) -> str:
+        _html_box_containing_job_url = {"a": "app-aware-link "}
+        job_title_found = div_box.find_all(_html_box_containing_job_url)
+        for elem in job_title_found:
+            res = self._extract_text_from_div(str(elem))
+            if res:
+                return res
         return ""
 
     def _extract_text_from_div(self, div: str) -> str:
         """
         Extracts the text from an html div.
-
+        
+        ---
         e.g.
-
+        
+        Input:
+        '<div class="entity-result__primary-subtitle t-14 t-black t-normal">
+        <!-- -->XYZ.Pub<!-- -->
+        </div>'
+        
+        Output:
+        'XYZ.Pub'
         """
+        # Each parenthesi is a regex group
         text_inbetween_pattern = re.compile(r'(<!-- -->)(.+)(<!-- -->)')
         regex_result = text_inbetween_pattern.search(div)
 
+        # Returning the second group, therefore the text that matches the middle parenthesi above
         return regex_result.group(2) if regex_result else ""
