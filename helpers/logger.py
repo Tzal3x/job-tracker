@@ -1,3 +1,6 @@
+"""
+Log the progress of the script for user feedback and easier debugging.
+"""
 import logging
 
 # create logger

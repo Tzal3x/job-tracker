@@ -1,25 +1,20 @@
-from linkedin_parser import LinkedInParser
-import yaml
+"""
+The main script. All starts from here.
+"""
+from helpers.credential_loaders import load_credentials
+from parsers.linkedin_parser import LinkedInParser
 
 
 def main():
-    # TODO move creds to the yml file
+    """
+    The main flow of the program is included here.
+    """
     linkedin_parser = LinkedInParser(
-        credentials=load_credentials(r".env.yaml"),  # TODO: create OS env vars instead
+        credentials=load_credentials(r".env.yaml"),  #TODO: create OS env vars instead
         headless=False
     )
     linkedin_parser.login()
     linkedin_parser.get_job_urls()
-
-
-def load_credentials(path) -> dict:
-    with open(path, "r") as stream:
-        try:
-            output = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(f"Unable to parse credentials yaml file! {exc}")
-            raise exc
-    return output
 
 
 if __name__ == "__main__":
