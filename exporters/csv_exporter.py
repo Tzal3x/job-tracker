@@ -15,6 +15,7 @@ class CSVExporter:
     Singleton that exports JobApplications to csv files
     """
     filename = "my_job_applications.csv"
+    delimiter = "@"
     existing_urls = CSVLoader.load_job_urls(filename)  # job urls already in the archive
 
     @staticmethod
@@ -34,7 +35,8 @@ class CSVExporter:
                 return 1
             fieldnames = list(job_applications[0].to_dict().keys())
             writer = csv.DictWriter(csvfile,
-                                    fieldnames=fieldnames)
+                                    fieldnames=fieldnames,
+                                    delimiter=CSVExporter.delimiter)
             if not file_exists:
                 writer.writeheader()
             for job_application in job_applications:
@@ -42,7 +44,18 @@ class CSVExporter:
                 if already_in_csv:
                     logger.warning("Existing job url found! Stopping export.")
                     return 1
-                writer.writerow(job_application.to_dict())
+                row = {
+                    key: CSVExporter.remove_delimiter(value)
+                    for key, value in job_application.to_dict().items()
+                    }
+                writer.writerow(row)
             logger.info("Exported %s jobs", len(job_applications))
         return 0
+
+    @staticmethod
+    def remove_delimiter(job_application_field: str) -> str:
+        """
+        Remove occurances of delimiter because it breaks the data.
+        """
+        return job_application_field.replace(CSVExporter.delimiter, '')
     

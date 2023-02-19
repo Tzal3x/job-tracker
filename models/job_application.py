@@ -1,6 +1,7 @@
 """
 Structures to describe job application data.
 """
+import re
 
 class JobApplication:
     """
@@ -41,8 +42,8 @@ class JobApplication:
         Same with the linkedin status.
         """
         all_valid = self._is_valid_url() and \
-            self._is_valid_company_name() and \
-            self._is_valid_linkedin_status()
+            (self._is_valid_company_name() or \
+             self._is_valid_linkedin_status())
         return all_valid
 
     def _is_valid_url(self) -> bool:
@@ -53,7 +54,8 @@ class JobApplication:
         return is_empty
 
     def _is_valid_linkedin_status(self) -> bool:
-        is_empty = bool(self.linkedin_status)
+        status_pattern = re.compile(r".+ \d+\w+ ago")
+        is_empty = bool(status_pattern.search(self.linkedin_status))
         return is_empty
 
     def __hash__(self) -> int:
