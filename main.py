@@ -14,7 +14,7 @@ def main():
         headless=True
     )
 
-    linkedin_parser.start(until_page=10)
+    linkedin_parser.run()
 
 
 if __name__ == "__main__":

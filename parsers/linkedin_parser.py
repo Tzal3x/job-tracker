@@ -72,7 +72,7 @@ class LinkedInParser:
         self.driver.implicitly_wait(1)
         logger.info("Login successful!")
 
-    def start(self, from_page=0, until_page=None) -> None:
+    def run(self, from_page=0, until_page=None) -> None:
         """
         Iterate through LinkedIn pages of applied jobs.
         Scrap job application information such as url, company name, etc.
@@ -204,11 +204,10 @@ class LinkedInParser:
         """
         _html_box_containing_job_url = {"a": "app-aware-link "}
         job_title_found = div_box.find_all(_html_box_containing_job_url)
+        res = ""
         for elem in job_title_found:
             res = self._extract_text_from_div(str(elem))
-            if res:
-                return res
-        return ""
+        return res
 
     def _extract_text_from_div(self, div: str) -> str:
         """
