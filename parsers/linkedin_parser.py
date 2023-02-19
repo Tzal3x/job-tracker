@@ -72,13 +72,11 @@ class LinkedInParser:
         self.driver.implicitly_wait(1)
         logger.info("Login successful!")
 
-    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> None:
+    def start(self, from_page=0, until_page=None) -> None:
         """
-        Iterate through all the pages of applied jobs and 
-        return a set that contains tuples of brief info about them.
-        Useful while running the program for the first time.
-
-        This job application will have a Brief and a Detailed version.
+        Iterate through LinkedIn pages of applied jobs.
+        Scrap job application information such as url, company name, etc.
+        Export/save the contents to an archive of your choice (e.g. csv, google_spreadsheets). 
         """
         self._login()
 
@@ -89,14 +87,10 @@ class LinkedInParser:
             # pylint: disable = line-too-long
             self._go_to_page(page_number=page)
             job_applications_of_current_page = self._parse_job_applications_of_current_page()
-            if job_applications_of_current_page:
-                export_interrupted = CSVExporter.export(list(job_applications_of_current_page))
-                if export_interrupted:
-                    # The export must have been interrupted
-                    # because the rest of the applications that were to be exported
-                    # already exist in the csv file.
-                    # OR because no applications were given to be exported to begin with
-                    break
+
+            was_export_interrupted = self._to_csv(job_applications_of_current_page)
+            if was_export_interrupted:
+                break
 
             final_page_reached = not job_applications_of_current_page
             if final_page_reached:
@@ -111,7 +105,14 @@ class LinkedInParser:
 
     def _go_to_page(self, page_number: int):
         """
-        Move webdriver to specific page of applied jobs 
+        Move webdriver to specific page of applied jobs.
+        
+        The page number is actually the N-th most recent job application
+        the user has done.
+        Specifying page_number = 5, is like saying skip the first 5 job applications
+        and get the following 10 most recent (i.e. from 6th to 10th).
+        Since LinkedIn fetches job applications in batches of 10, specifying
+        page_number as decades (i.e. 0, 10, 20, 30, ...) is like specifying a page number. 
         """
         logger.info("Going to page %s ...", page_number)
         # pylint: disable = line-too-long
@@ -121,6 +122,11 @@ class LinkedInParser:
         sleep(1 + random() * 4)
 
     def _parse_job_applications_of_current_page(self) -> Set[JobApplication]:
+        """
+        Parse the job application contents of a specific page. 
+        Create JobApplication objects containing that information and accumulate
+        them in a set to avoid duplicates.
+        """
         _tag_of_boxes_containing_jobs_of_current_page = {
             "div": "entity-result__content entity-result__divider pt3 pb3 t-12 t-black--light"
         }
@@ -144,6 +150,9 @@ class LinkedInParser:
         return job_applications_set
 
     def _parse_job_post_url(self, div_box) -> str:
+        """
+        Given an html div_box, parse the job post url.
+        """
         _html_box_containing_job_url = {"a": "app-aware-link "}
         job_post_url_found = div_box.find_all(_html_box_containing_job_url)
         job_post_url = job_post_url_found[0].attrs['href'] if job_post_url_found else ""
@@ -153,6 +162,9 @@ class LinkedInParser:
         return job_post_final_url
 
     def _parse_company_name(self, div_box) -> str:
+        """
+        Given an html div_box, parse the job post company name.
+        """
         company_found = div_box.find_all(
             'div', class_="entity-result__primary-subtitle t-14 t-black t-normal"
         )
@@ -163,6 +175,17 @@ class LinkedInParser:
         return ""
 
     def _parse_linkedin_status(self, div_box) -> str:
+        """
+        Given an html div_box, parse the linkedin status.
+
+        examples of linkein statuses: 
+        - Application viewed 3d ago
+        - Applied 5d ago
+        - Applied 1w ago
+        - Applied 1mo ago
+        - Application viewed 2yr ago
+        - Applied 3yr ago
+        """
         linkedin_status_found = div_box.find_all(
             'span',
             class_="entity-result__simple-insight-text entity-result__simple-insight-text--small"
@@ -174,6 +197,11 @@ class LinkedInParser:
         return ""
 
     def _parse_title(self, div_box) -> str:
+        """
+        Given an html div_box, parse the job title.
+
+        e.g. "Software Engineer"
+        """
         _html_box_containing_job_url = {"a": "app-aware-link "}
         job_title_found = div_box.find_all(_html_box_containing_job_url)
         for elem in job_title_found:
@@ -203,3 +231,15 @@ class LinkedInParser:
 
         # Returning the second group, therefore the text that matches the middle parenthesi above
         return regex_result.group(2) if regex_result else ""
+
+    def _to_csv(self, job_applications_of_current_page: Set[JobApplication]) -> int:
+        """
+        Export current page contents to csv.
+        """
+        input_not_empty = job_applications_of_current_page
+        if input_not_empty:
+            was_export_interrupted = CSVExporter.export(
+                list(job_applications_of_current_page)
+                )
+            return was_export_interrupted
+        return 1  # export was interrupted due to empty input
