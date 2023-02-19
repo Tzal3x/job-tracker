@@ -11,10 +11,11 @@ def main():
     """
     linkedin_parser = LinkedInParser(
         credentials=load_credentials(r".env.yaml"),
-        headless=False
+        headless=True
     )
 
-    applied_jobs = linkedin_parser.parse_all_applied_jobs(until_page=20)
+    linkedin_parser.start(until_page=10)
+
 
 if __name__ == "__main__":
     main()

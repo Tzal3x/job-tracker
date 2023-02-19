@@ -11,20 +11,21 @@ class JobApplication:
                  url: str,
                  company_name: str,
                  linkedin_status: str,
-                 title: str,
-                 **kwargs) -> None:
+                 title: str) -> None:
         self.url = url
         self.company_name = company_name
         self.linkedin_status = linkedin_status
         self.title = title
-        self.internal_dict = {
-            "url": url,
-            "company_name": company_name,
-            "linkedin_status": linkedin_status
-        }.update(**kwargs)
+
+    def to_dict(self) -> dict:
+        """
+        Return the fields of the JobApplication in a dictionary.
+        Useful when exporting the data to files.
+        """
+        return vars(self)
 
     def __str__(self) -> str:
-        pattern = "{}, NAME: {}, STATUS: {}"
+        pattern = "{}, {} - {}"
         return pattern.format(
             self.title,
             self.company_name,
@@ -45,7 +46,7 @@ class JobApplication:
         return all_valid
 
     def _is_valid_url(self) -> bool:
-        return "flagship3_job_home_appliedjobs" in self.url
+        return self.url != ''
 
     def _is_valid_company_name(self) -> bool:
         is_empty = bool(self.company_name)
