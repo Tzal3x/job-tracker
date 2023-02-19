@@ -46,7 +46,7 @@ class JobApplication:
         return all_valid
 
     def _is_valid_url(self) -> bool:
-        return "flagship3_job_home_appliedjobs" in self.url
+        return self.url != ''
 
     def _is_valid_company_name(self) -> bool:
         is_empty = bool(self.company_name)

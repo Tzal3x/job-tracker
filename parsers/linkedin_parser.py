@@ -140,10 +140,11 @@ class LinkedInParser:
     def _parse_job_post_url(self, div_box) -> str:
         _html_box_containing_job_url = {"a": "app-aware-link "}
         job_post_url_found = div_box.find_all(_html_box_containing_job_url)
-        if job_post_url_found:
-            job_post_url = job_post_url_found[0].attrs['href']
-            return job_post_url
-        return ""
+        job_post_url = job_post_url_found[0].attrs['href'] if job_post_url_found else ""
+        url_pattern = re.compile(r"(https:\/\/www\.linkedin\.com\/jobs\/view\/\d+)(\/.+)")
+        regex_result = url_pattern.search(job_post_url)
+        job_post_final_url = regex_result.group(1) if regex_result else ""
+        return job_post_final_url
 
     def _parse_company_name(self, div_box) -> str:
         company_found = div_box.find_all(

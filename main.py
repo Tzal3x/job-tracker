@@ -15,7 +15,7 @@ def main():
         headless=False
     )
 
-    applied_jobs = linkedin_parser.parse_all_applied_jobs()
+    applied_jobs = linkedin_parser.parse_all_applied_jobs(until_page=10)
     CSVExporter.export("job_applications_archive.csv", job_applications=applied_jobs)
 
 
