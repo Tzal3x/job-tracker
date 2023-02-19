@@ -4,7 +4,7 @@ Scrap LinkedIn data with selenium and BeautifulSoup.
 import re
 from time import sleep
 from random import random
-from typing import Set, List
+from typing import Set
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -12,8 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+
 from helpers.logger import logger
 from models.job_application import JobApplication
+from exporters.csv_exporter import CSVExporter
+
 
 class LinkedInParser:
     """
@@ -69,7 +72,7 @@ class LinkedInParser:
         self.driver.implicitly_wait(1)
         logger.info("Login successful!")
 
-    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> List[JobApplication]:
+    def parse_all_applied_jobs(self, from_page=0, until_page=None) -> None:
         """
         Iterate through all the pages of applied jobs and 
         return a set that contains tuples of brief info about them.
@@ -82,26 +85,29 @@ class LinkedInParser:
         logger.info("Parsing URLS of applied jobs ...")
         next_page_available = True
         page = from_page
-        job_applications_accumulator = set()  #This is the output
         while next_page_available:
             # pylint: disable = line-too-long
             self._go_to_page(page_number=page)
             job_applications_of_current_page = self._parse_job_applications_of_current_page()
+            if job_applications_of_current_page:
+                export_interrupted = CSVExporter.export(list(job_applications_of_current_page))
+                if export_interrupted:
+                    # The export must have been interrupted
+                    # because the rest of the applications that were to be exported
+                    # already exist in the csv file.
+                    # OR because no applications were given to be exported to begin with
+                    break
 
             final_page_reached = not job_applications_of_current_page
             if final_page_reached:
                 logger.info("Final page reached! Parsing no further ...")
                 next_page_available = False
             else:
-                job_applications_accumulator.update(
-                    job_applications_of_current_page
-                    )
                 if until_page and until_page == page:
                     break
-                page += 10  #go to next page ...
+                page += 10  # go to next page ...
 
-        logger.info("Total number of jobs parsed: %i", len(job_applications_accumulator))
-        return list(job_applications_accumulator)
+        logger.info("Job application parsing was complete.")
 
     def _go_to_page(self, page_number: int):
         """
