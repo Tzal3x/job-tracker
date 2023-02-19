@@ -141,6 +141,7 @@ class LinkedInParser:
                 "company_name": self._parse_company_name(div_box),
                 "linkedin_status": self._parse_linkedin_status(div_box),
                 "title": self._parse_title(div_box),
+                "location": self._parse_location(div_box)
                 }
             job_application = JobApplication(**job_info)
             if job_application.all_basic_fields_valid():
@@ -208,6 +209,21 @@ class LinkedInParser:
         for elem in job_title_found:
             res = self._extract_text_from_div(str(elem))
         return res
+
+    def _parse_location(self, div_box) -> str:
+        """
+        Given an html div_box, parse the job post company name.
+        """
+        subdivs = div_box.find_all(
+            {'div': "entity-result__content entity-result__divider pt3 pb3 t-12 t-black--light"}
+        )
+        location_and_policy_pattern = re.compile(r"\b\w+ \(([Hh]ybrid|[Rr]emote|[Oo]n-?site)\)")
+
+        for subdiv in subdivs:
+            locations = subdiv.find_all(text=location_and_policy_pattern);
+            if len(locations) == 1:
+                return locations[0]
+        return ""
 
     def _extract_text_from_div(self, div: str) -> str:
         """
