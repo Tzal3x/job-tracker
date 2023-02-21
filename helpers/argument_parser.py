@@ -13,17 +13,24 @@ def get_command_line_arguments():
                     description = "A program that tracks applications by "
                                   "scrapping your personal data from popular job hiring "
                                   "platforms and exports them to a file of your choice.",
-                    epilog = 'Example: TODO') # TODO example
-    parser.add_argument("--from_platform",
-                        choices=('LinkedIn',), 
+                    epilog = 'Example: python main.py -p LinkedIn -c .env.yaml')
+    parser.add_argument("-p", "--from_platform",
+                        choices=('LinkedIn',),
                         help="The platform that is to be scrapped.",
                         required=True)
-    parser.add_argument("--username",
-                        help="Username to login to the corresponding platform.",
-                        required=True)
-    parser.add_argument("--export_type",
+    parser.add_argument("-e", "--export_type",
                         choices=('csv',),
-                        required=True,
+                        default='csv',
                         help="The file type that the results will be saved on.")
-    args = parser.parse_args()
-    return args
+
+    # Either login with username password by passing them in cmd
+    # or parse the credentials through a YAML file:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-u", "--username",
+                        help="Username to login to the corresponding platform.")
+    group.add_argument("-c", "--credentials_file",
+                       help="The name of the YAML file that contains the credentials"
+                       "to log in to the corresponding platform.",
+                       type=str)
+
+    return parser.parse_args()

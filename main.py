@@ -16,11 +16,13 @@ def main():
 
     credentials = {}
     if args.username:
+        print(f"Enter your credentials to login to {args.from_platform} ...")
         credentials["username"] = args.username
         credentials["password"] = getpass()
+    elif args.credentials_file:
+        credentials = load_credentials(args.credentials_file)[args.from_platform]
     else:
-        credentials = load_credentials(r".env.yaml")
-
+        raise ImportError("No credentials found!")
     linkedin_parser = LinkedInParser(
         credentials=credentials,
         headless=True
