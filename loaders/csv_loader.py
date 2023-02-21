@@ -10,6 +10,7 @@ class CSVLoader:
     """
     Load the files (if exist) of past job application scrapping. 
     """
+    delimiter = '@'
     @staticmethod
     def load_job_urls(filename) -> List[str]:
         """
@@ -18,7 +19,7 @@ class CSVLoader:
         urls = []
         try:
             with open(filename, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',')
+                reader = csv.reader(csvfile, delimiter=CSVLoader.delimiter)
                 for row in reader:
                     urls.append(row[0])
         except FileNotFoundError:

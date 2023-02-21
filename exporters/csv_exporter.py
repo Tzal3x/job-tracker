@@ -15,7 +15,7 @@ class CSVExporter:
     Singleton that exports JobApplications to csv files
     """
     filename = "my_job_applications.csv"
-    delimiter = "@"
+    delimiter = CSVLoader.delimiter
     existing_urls = CSVLoader.load_job_urls(filename)  # job urls already in the archive
 
     @staticmethod
