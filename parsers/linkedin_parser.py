@@ -39,7 +39,7 @@ class LinkedInParser:
     def __del__(self) -> None:
         self.driver.close()
 
-    def _login(self) -> None:
+    def _login(self) -> int:
         """
         Driver logs in to the LinkedIn
         """
@@ -70,7 +70,13 @@ class LinkedInParser:
 
         # TODO: - save cookies so that you don't need to login each time
         self.driver.implicitly_wait(1)
+
+        incorrect_credentials = r"That's not the right password." in self.driver.page_source
+        if incorrect_credentials:
+            logger.error("Incorrect username or password! Exiting program")
+            return 1
         logger.info("Login successful!")
+        return 0
 
     def run(self, from_page=0, until_page=None) -> None:
         """
@@ -78,7 +84,9 @@ class LinkedInParser:
         Scrap job application information such as url, company name, etc.
         Export/save the contents to an archive of your choice (e.g. csv, google_spreadsheets). 
         """
-        self._login()
+        login_failed = self._login()
+        if login_failed:
+            return
 
         logger.info("Parsing URLS of applied jobs ...")
         next_page_available = True
