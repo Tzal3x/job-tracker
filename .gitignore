@@ -131,3 +131,5 @@ dmypy.json
 
 # csv exports
 *.csv#
+*.csv
+.vscode/*

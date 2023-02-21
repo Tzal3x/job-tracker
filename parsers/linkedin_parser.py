@@ -33,8 +33,8 @@ class LinkedInParser:
             options=options
         )
 
-        self.username = credentials["LinkedIn"]["username"]
-        self.password = credentials["LinkedIn"]["password"]
+        self.username = credentials["username"]
+        self.password = credentials["password"]
 
     def __del__(self) -> None:
         self.driver.close()
