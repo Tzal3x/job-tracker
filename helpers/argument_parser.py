@@ -9,7 +9,7 @@ def get_command_line_arguments():
     Create the interface and parse the command line arguments.
     """
     parser = argparse.ArgumentParser(
-                    prog = 'Job Tracker',
+                    prog = 'main.py',
                     description = "A program that tracks applications by "
                                   "scrapping your personal data from popular job hiring "
                                   "platforms and exports them to a file of your choice.",
@@ -22,6 +22,9 @@ def get_command_line_arguments():
                         choices=('csv',),
                         default='csv',
                         help="The file type that the results will be saved on.")
+    parser.add_argument("-H", "--show_head", action="store_false",
+                        help="Using this flag, chrome will load and "
+                        "you will see the web driver in action.")
 
     # Either login with username password by passing them in cmd
     # or parse the credentials through a YAML file:
