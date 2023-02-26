@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
 
 from helpers.logger import logger
@@ -23,15 +24,13 @@ class LinkedInParser:
     Singleton object used to parse LinkedIn data of applied job applications. 
     """
 
-    def __init__(self, credentials: dict, headless=True) -> None:
+    def __init__(self, credentials: dict) -> None:
         options = Options()
-        options.headless = headless
-        self.driver = webdriver.Chrome(
-            # TODO: I might need to download install Chrome and set
-            # CHROMEDRIVER_PATH when (and if) I dockerize the app.
-            # CHROMEDRIVER_PATH,
-            options=options
-        )
+        options.headless = True
+        self.driver = webdriver.Remote(
+            "http://127.0.0.1:4444/wd/hub", 
+            DesiredCapabilities.CHROME
+            )
 
         self.username = credentials["username"]
         self.password = credentials["password"]

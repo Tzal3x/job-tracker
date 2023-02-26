@@ -25,7 +25,6 @@ def main():
         raise ImportError("No credentials found!")
     linkedin_parser = LinkedInParser(
         credentials=credentials,
-        headless=args.show_head
     )
 
     linkedin_parser.run()

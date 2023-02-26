@@ -15,10 +15,13 @@ Please pay attention to open issues to find some detected bugs or other misbehav
 ☕ Feel free to contribute by opening a pull-request for the open issues or create one yourself :)
 
 ## Installation
-*Python 3.8.10*
-`pip install -r requirements`
+*Python 3.8.10, Docker version 23.0.1*
+
+`$ pip install -r requirements`
 
 (Optional) Create manually a YAML file containing the fields bellow:
+
+`.env.yaml`
 ```yaml
 LinkedIn:
   username: "<your LinkedIn email>"
@@ -32,7 +35,16 @@ This is used so that the scrapper can login to the platform of choice.
 If this file is not provided it's ok. You can still pass the username and password using the command line arguments. 
 
 ## Run
+
+**Run a selenium chrome web-driver container to do the requests for you:**
+
+`$ sudo docker run --rm -it -p 4444:4444 -p 7900:7900 --shm-size 2g selenium/standalone-chrome:dev`
+
 Execute the following `python main.py --help` for a detailed description of the programs options and example runs.
+
+e.g. `$ python main.py -c .env.yaml`
+
+where `.env.yaml` contains your LinkedIn credentials (username and password as mentioned above).
 
 ## Example Output CSV of parsing linkedin data
 | url	| company_name | linkedin_status | title | location | 

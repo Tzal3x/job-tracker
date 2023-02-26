@@ -17,14 +17,11 @@ def get_command_line_arguments():
     parser.add_argument("-p", "--from_platform",
                         choices=('LinkedIn',),
                         help="The platform that is to be scrapped.",
-                        required=True)
+                        default='LinkedIn')
     parser.add_argument("-e", "--export_type",
                         choices=('csv',),
                         default='csv',
                         help="The file type that the results will be saved on.")
-    parser.add_argument("-H", "--show_head", action="store_false",
-                        help="Using this flag, chrome will load and "
-                        "you will see the web driver in action.")
 
     # Either login with username password by passing them in cmd
     # or parse the credentials through a YAML file:
